@@ -1,0 +1,26 @@
+## 今天写SBUS驱动内存越界了
+###问题代码
+```c
+int offset = 0;
+        while ((offset = find_begin(p, len)) != -1) {
+            p += offset + 25;
+            len -= offset + 25;
+        }
+        if (len > 25) {
+            memcpy(rx_date, p, 25); //这实际上是从sbus帧的结尾开始复制，可能发生越界，一般会修改到dma的缓冲区导致fault
+            sbus_parseframe();
+        }
+```
+```c
+static int find_begin(const uint8_t *data, uint16_t len, uint16_t start) {
+    if (len < 25) {
+        return -1;
+    }
+    for (int i = str; i < len; i++) {
+        if (data[i] == 0x0F && data[i + 24] == 0x00) {
+            return i;
+        }
+    }
+    return -1;
+}
+```

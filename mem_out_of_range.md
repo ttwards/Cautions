@@ -85,3 +85,23 @@ objdump -S build/zephyr/zephyr.elf > assembly.txt
 ; 		result = 0;
 ```
 发现是申请缓存的时候报错，查找附近代码后发现问题
+修改：
+```c
+uint8_t *ptr_offset = p + find_begin(p, len);
+if (len > 25) {
+        memcpy(data->data, ptr_offset, 25);
+}
+```
+```c
+static uint8_t find_begin(const uint8_t *data, uint16_t len) {
+    if (len < 25) {
+        return -1;
+    }
+    for (int i = len - 1; i >= 0; i--) {
+        if (data[i - 24] == 0x0F && data[i] == 0x00) {
+            return i - 24;
+        }
+    }
+    return -1;
+}
+```
